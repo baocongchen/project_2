@@ -1,4 +1,4 @@
-# Large Scale Data Processing: Project 1
+# Large Scale Data Processing: Project 2
 ## Getting started
 Head to [Project 1](https://github.com/CSCI3390/project_1) if you're looking for information on Git, template repositories, or setting up your local/remote environments.
 
