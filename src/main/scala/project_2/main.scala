@@ -76,12 +76,15 @@ object main{
       this(Set((s, z_of_s )) , z_of_s, bucket_size_in)
     }
 
-    def +(that: BJKSTSketch): BJKSTSketch = {    /* Merging two sketches */
-
+    def merge(that: BJKSTSketch): BJKSTSketch = {    /* Merging two sketches */
+      val s1 = new BJKSTSketch(bucket, z, BJKST_bucket_size);
+      val ans = that + s1;
+      return ans;
     }
 
     def add_string(s: String, z_of_s: Int): BJKSTSketch = {   /* add a string to the sketch */
-
+      val ans = new BJKSTSketch((bucket._1 + s,bucket._2), z + z_of_s, BJKST_bucket_size);
+      return ans;
     }
   }
 
@@ -100,13 +103,30 @@ object main{
 
 
   def BJKST(x: RDD[String], width: Int, trials: Int) : Double = {
+    val h = Seq.fill(trials)(new hash_function(2000000000))
+    def param0 (accu1: Seq[BJKSTSketch], accu2: Seq[BJKSTSketch]): BJKSTSketch = {
+     Seq.range(0,trials).map(i => scala.math.min(accu1(i)._2, accu2(i)_2));
+     Seq.range(0,trials).map( i => accu1(i).merge(accu2(i)));
+     Seq.range(0,trials).map( i =>  scala.math.max(accu1(i), h(i).zeroes(h(i).hash(accu1(i).bucket._1))) )
+    }
+    def param1 (accu1: BJKSTSketch) {
+      while(accu1.BJKST_bucket_size >= width) {
+        accu1.z = accu1.z + 1
+        if (accu1.bucket._2 < accu1.z) {
+          accu1.pop; //delete alpha and beta
+        }
+      }
+    }
+    val x3 = x.aggregate(Seq.fill(trials)(0))(param1, param0);
+    val ans = x3.map(z => z.BJKST_bucket_size*scala.math.pow(2, z)).sortWith(_ < _)( trials/2) /* Take the median of the trials */
 
+	return ans;
   }
 
 
-  def Tug_of_War(x: RDD[String], width: Int, depth:Int) : Long = {
-
-  }
+  //def Tug_of_War(x: RDD[String], width: Int, depth:Int) : Long = {
+  //return x;
+  //}
 
 
   def exact_F0(x: RDD[String]) : Long = {
@@ -116,7 +136,8 @@ object main{
 
 
   def exact_F2(x: RDD[String]) : Long = {
-
+    val ans = x.map(z => (z, 1)).reduceByKey(_ + _).map(z => math.pow(z._2, 2)).reduce(_ + _).toLong;
+    return ans
   }
 
 
@@ -130,8 +151,8 @@ object main{
     }
     val input_path = args(0)
 
-  //    val df = spark.read.format("csv").load("data/2014to2017.csv")
-    val df = spark.read.format("csv").load(input_path)
+    val df = spark.read.format("csv").load("test.csv")
+    //val df = spark.read.format("csv").load(input_path)
     val dfrdd = df.rdd.map(row => row.getString(0))
 
     val startTimeMillis = System.currentTimeMillis()
@@ -164,6 +185,7 @@ object main{
       println("==================================")
 
     }
+    /*
     else if(args(1)=="ToW") {
        if(args.length != 4) {
          println("Usage: project_2 input_path ToW width depth")
@@ -176,6 +198,7 @@ object main{
       println("Tug-of-War F2 Approximation. Width :" +  args(2) + ". Depth: "+ args(3) + ". Time elapsed:" + durationSeconds + "s. Estimate: "+ans)
       println("==================================")
     }
+    */
     else if(args(1)=="exactF2") {
       if(args.length != 2) {
         println("Usage: project_2 input_path exactF2")
